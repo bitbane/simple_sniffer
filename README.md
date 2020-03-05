@@ -10,7 +10,7 @@ Usage:
 
 The interface name (`ifname`) is optional. If specified, only capture packets 
 on that interface. If not specified, packets from all interfaces will be captured.
-This is interesting if the system has non-ethernet interfaces since the PCAP is 
+This has interesting results if the system has non-ethernet interfaces since the PCAP is 
 written to assume ethernet.
 
 **Issues:**
