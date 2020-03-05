@@ -13,6 +13,14 @@ on that interface. If not specified, packets from all interfaces will be capture
 This has interesting results if the system has non-ethernet interfaces since the PCAP is 
 written to assume ethernet.
 
+**Installation**
+Compile with an appropriate compiler for your platform. There are no external dependencies
+or libraries. For example, to compile for an ARMHF target:
+
+`arm-none-linux-gnueabihf-gcc simple_sniffer-c -o simple_sniffer`
+
+will create the appropriate binary you can then copy onto your target system
+
 **Issues:**
 
 For reasons unkown, if you specify an interface name, it looks like in some cases 
