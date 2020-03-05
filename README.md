@@ -14,10 +14,11 @@ This has interesting results if the system has non-ethernet interfaces since the
 written to assume ethernet.
 
 **Installation**
+
 Compile with an appropriate compiler for your platform. There are no external dependencies
 or libraries. For example, to compile for an ARMHF target:
 
-`arm-none-linux-gnueabihf-gcc simple_sniffer-c -o simple_sniffer`
+`arm-none-linux-gnueabihf-gcc simple_sniffer.c -o simple_sniffer`
 
 will create the appropriate binary you can then copy onto your target system
 
