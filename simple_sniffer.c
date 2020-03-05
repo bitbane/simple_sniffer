@@ -1,12 +1,24 @@
-#include <stdio.h>
+#include <signal.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/if_ether.h> 
-#include <unistd.h>
-#include <sys/time.h>
+#include <stdio.h>
 #include <stdint.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <arpa/inet.h>
+
+#include <linux/if_packet.h>
+
+#include <netinet/if_ether.h> 
+#include <net/ethernet.h>
+#include <net/if.h>
+
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+
+
 
 /** PCAP file header */
 typedef struct pcap_hdr_s {
@@ -28,6 +40,11 @@ typedef struct pcaprec_hdr_s {
 } pcaprec_hdr_t;
 
 const int MAX_SIZE = 16384;
+static uint8_t keepRunning = 1;
+
+void intHandler(int foo) {
+    keepRunning = 0;
+}
 
 int main(int argc, char** argv)
 {
@@ -35,9 +52,16 @@ int main(int argc, char** argv)
     struct sockaddr saddr;
     char buffer[MAX_SIZE];
 
+    /* Catch ctrl-c to exit cleanly */
+    struct sigaction act;
+    act.sa_handler = intHandler;
+    sigaction(SIGINT, &act, NULL);
+
+    /* Check arguments */
     if (argc < 2)
     {
-        printf("Usage: %s filename\n", argv[0]);
+        printf("Usage: %s filename [interface_name]\n", argv[0]);
+        printf("\tIf no interface_name is specified, packets will be captured from all available interfaces");
         exit(-1);
     }
 
@@ -60,7 +84,32 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
-    for(;;)
+    if(argc == 3)
+    {
+        struct sockaddr_ll sll;
+        struct ifreq ifr;
+
+        printf("Sniffing on interface %s\n", argv[2]);
+        bzero(&sll , sizeof(sll));
+        bzero(&ifr , sizeof(ifr)); 
+        strncpy((char *)ifr.ifr_name, argv[2], IFNAMSIZ); 
+        //copy device name to ifr 
+        if((ioctl(sock_raw, SIOCGIFINDEX , &ifr)) == -1)
+        { 
+            perror("Unable to find interface index");
+            exit(-1); 
+        }
+        sll.sll_family = AF_PACKET; 
+        sll.sll_ifindex = ifr.ifr_ifindex; 
+        sll.sll_protocol = htons(ETH_P_ALL); 
+        if((bind(sock_raw, (struct sockaddr *)&sll, sizeof(sll))) == -1)
+        {
+            perror("Failed to bind: ");
+            exit(-1);
+        }
+    }
+
+    while(keepRunning == 1)
     {
         saddr_size = sizeof(saddr);
         data_size = recvfrom(sock_raw, buffer, MAX_SIZE, 0, &saddr, (socklen_t*)&saddr_size);
@@ -83,4 +132,3 @@ int main(int argc, char** argv)
     close(sock_raw);
     return 0;
 }
-
